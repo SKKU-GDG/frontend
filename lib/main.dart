@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 // 1) 방금 만든 스플래시 화면 파일을 import
 import 'screens/splash_screen.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
   await dotenv.load(fileName: ".env");
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,    // 세로 (화면 위)
+    DeviceOrientation.portraitDown,  // 세로 (화면 아래)
+  ]);
+
   runApp(const MyApp());
 }
 

@@ -2,6 +2,7 @@ import 'dart:io';  // File 때문에 import 했지만, Web 분기 내부에서�
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;  // 추가
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -282,6 +283,12 @@ void _startSession() async {
       _isSessionActive = true;
     });
 
+    Fluttertoast.showToast(
+      msg: "Maximum recording time is 8 seconds.",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+
     if (isVoiceMode) {
       _startListening();
     } else {
@@ -333,6 +340,41 @@ void _startSession() async {
     super.dispose();
   }
 
+  Widget _buildCameraPreviewUI() {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    final previewSize = _cameraController!.value.previewSize!;
+
+    final width = previewSize.width < previewSize.height ? previewSize.width : previewSize.height;
+    final height = previewSize.width < previewSize.height ? previewSize.height : previewSize.width;
+    final aspectRatio = width / height;
+
+    return Stack(
+      children: [
+        Center(
+          child: AspectRatio(
+            aspectRatio: aspectRatio,
+            child: CameraPreview(_cameraController!),
+          ),
+        ),
+        Positioned(
+          bottom: 40,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: FloatingActionButton(
+              backgroundColor: Colors.red,
+              onPressed: _stopVideoRecording,
+              child: const Icon(Icons.stop),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -344,7 +386,9 @@ void _startSession() async {
         elevation: 1,
       ),
       backgroundColor: const Color(0xFFFAF7FF),
-      body: Column(
+      body: (_isSessionActive && !isVoiceMode)
+        ? _buildCameraPreviewUI()
+        : Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text('발음해 보세요!', style: TextStyle(fontSize: 20)),
@@ -369,7 +413,7 @@ void _startSession() async {
                   onChanged: (value) {
                     _prompt = value;
                   },
-                )
+              )
               : Text(
                   _prompt,
                   textAlign: TextAlign.center,
@@ -378,19 +422,19 @@ void _startSession() async {
           ),
           const SizedBox(height: 24),
            GestureDetector(
-   onTap: _startSession,  // ← 여기 한 줄로 대체!
-   child: CircleAvatar(
-     radius: 48,
-     backgroundColor: Colors.grey.shade200,
-     child: Icon(
-      _isSessionActive
-        ? Icons.stop
-        : (isVoiceMode ? Icons.mic : Icons.videocam),
-       size: 40,
-       color: Colors.black54,
-     ),
-   ),
-),
+              onTap: _startSession,  // ← 여기 한 줄로 대체!
+              child: CircleAvatar(
+                radius: 48,
+                backgroundColor: Colors.grey.shade200,
+                child: Icon(
+                  _isSessionActive
+                    ? Icons.stop
+                    : (isVoiceMode ? Icons.mic : Icons.videocam),
+                  size: 40,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
           const SizedBox(height: 28),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 24),

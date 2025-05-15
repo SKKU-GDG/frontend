@@ -41,6 +41,7 @@ dependencies:
   flutter_markdown: ^0.6.10
   flutter_dotenv: ^5.0.2
   permission_handler: ^11.0.1
+  fluttertoast: ^8.2.2 # 최신 버전 확인 필요
 
 
   
