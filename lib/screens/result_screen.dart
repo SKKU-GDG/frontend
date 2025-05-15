@@ -44,7 +44,7 @@ class _ResultScreenState extends State<ResultScreen> {
   String? _aiSolution;
   bool   _loadingAI = false;
   
-  String userPronun = "[AI is analyzing your voice.]";
+  String userPronun = "";
   
   VideoPlayerController? _aiVideoCtr;
   
@@ -302,7 +302,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 Expanded(
                   child: Text(
                       userPronun.isEmpty 
-                        ? '[Cannot recognize your voice]' 
+                        ? '[AI is analyzing your voice]' 
                         : userPronun,
                     style: const TextStyle(fontSize: 14),
                   ),

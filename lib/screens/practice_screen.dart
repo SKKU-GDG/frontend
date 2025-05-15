@@ -25,6 +25,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
   
   bool isVoiceMode = true; // 음성 인식 모드
 
+  late TextEditingController _customController;  // 여기!
+
+
   // recorder
   FlutterSoundRecorder _audioRecorder = FlutterSoundRecorder();
 
@@ -57,6 +60,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
     _prompt =
         promptMap[widget.category] ??
         "Your voice matters,\nno matter how it is heard.";
+    
+    if (widget.category == 'Custom') {
+      _customController = TextEditingController(text: _prompt);
+    }
   }
 
   // Future<void> _initSpeech() async {
@@ -320,6 +327,10 @@ void _startSession() async {
     //_speech.stop();
     _audioRecorder.closeRecorder();
     _cameraController?.dispose();
+    if (widget.category == 'Custom') {
+      _customController.dispose();
+    }
+
     super.dispose();
   }
 
@@ -346,11 +357,25 @@ void _startSession() async {
               borderRadius: BorderRadius.circular(8),
               color: Colors.white,
             ),
-            child: Text(
-              _prompt,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, height: 1.4),
-            ),
+            child: widget.category == 'Custom'
+              ? TextField(
+                  controller: _customController,
+                  maxLines: null,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, height: 1.4),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: "Type your custom prompt here",
+                  ),
+                  onChanged: (value) {
+                    _prompt = value; // 실시간으로 _prompt 업데이트
+                  },
+                )
+              : Text(
+                  _prompt,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, height: 1.4),
+                ),
           ),
           const SizedBox(height: 24),
            GestureDetector(
