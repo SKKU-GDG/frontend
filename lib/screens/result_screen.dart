@@ -131,7 +131,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Future<void> _getAIGuideVideo() async {
-    final url = Uri.parse("https://3e24-203-252-33-6.ngrok-free.app/get-video");
+    final url = Uri.parse("https://f680-203-252-33-7.ngrok-free.app/get-video");
 
     http.Response response;
 
@@ -418,14 +418,21 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Widget _buildVideoPlayer(VideoPlayerController? ctr) {
     if (ctr == null || !ctr.value.isInitialized) return _buildPlaceholder();
+    
+    ctr.setVolume(0.0);
+    final size = ctr.value.size;
+    final double width = size.width < size.height ? size.width : size.height;
+    final double height = size.width < size.height ? size.height : size.width;
+    final aspectRatio = width / height;
+
     return AspectRatio(
-      aspectRatio: 16 / 9,
+      aspectRatio: 1.0,
       child: Chewie(
         controller: ChewieController(
           videoPlayerController: ctr,
           autoPlay: true, // 자동 재생 여부
           looping: true, // 반복 재생 여부
-          aspectRatio: ctr.value.aspectRatio,
+          aspectRatio: aspectRatio,
           allowPlaybackSpeedChanging: true, // 배속 변경 허용
         ),
       ),

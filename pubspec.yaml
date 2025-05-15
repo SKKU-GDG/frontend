@@ -32,7 +32,6 @@ dependencies:
     sdk: flutter
   http: ^0.13.6
   provider: ^6.0.5
-  speech_to_text: ^7.0.0      # 음성 인식
   camera: ^0.10.0             # 영상 녹화
   video_player: ^2.5.1        # 결과 영상 재생
 

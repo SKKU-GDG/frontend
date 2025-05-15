@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'result_screen.dart';
 
 import 'package:permission_handler/permission_handler.dart';
@@ -368,7 +367,7 @@ void _startSession() async {
                     hintText: "Type your custom prompt here",
                   ),
                   onChanged: (value) {
-                    _prompt = value; // 실시간으로 _prompt 업데이트
+                    _prompt = value;
                   },
                 )
               : Text(
