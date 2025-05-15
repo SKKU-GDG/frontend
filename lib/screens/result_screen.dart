@@ -1,22 +1,36 @@
 // lib/screens/result_screen.dart
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:http/http.dart' as http;
+import 'package:chewie/chewie.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
+
+//test
+import 'package:path/path.dart';
+import 'package:http_parser/http_parser.dart';
 
 class ResultScreen extends StatefulWidget {
   final String category;
   final String originalText;
   final String userText;      // VOICE 모드: 텍스트 / VIDEO 모드: 파일 경로
   final bool isVoiceMode;     // true: 음성 모드, false: 영상 모드
-  final String? aiGuideAsset; // AI 가이드용 비디오(asset 경로)
-
+  
+  //수정한 부분
+  final String videoFilePath;
+  
   const ResultScreen({
     Key? key,
     required this.category,
     required this.originalText,
     required this.userText,
     required this.isVoiceMode,
-    this.aiGuideAsset,
+    //수정한 부분
+    required this.videoFilePath,
   }) : super(key: key);
 
   @override
@@ -25,11 +39,15 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   VideoPlayerController? _userVideoCtr;
-  VideoPlayerController? _aiVideoCtr;
 
   // ① AI 솔루션 문자열을 저장할 상태 변수
   String? _aiSolution;
   bool   _loadingAI = false;
+  
+  String userPronun = "[AI is analyzing your voice.]";
+  
+  VideoPlayerController? _aiVideoCtr;
+  
 
   @override
   void initState() {
@@ -38,18 +56,70 @@ class _ResultScreenState extends State<ResultScreen> {
 
     if (!widget.isVoiceMode) {
       // 사용자가 녹화한 비디오 로드
-      _userVideoCtr = VideoPlayerController.file(File(widget.userText))
+      _userVideoCtr = VideoPlayerController.file(File(widget.videoFilePath))
         ..initialize().then((_) => setState(() {}));
-      // AI 가이드 비디오 로드 (asset)
-      if (widget.aiGuideAsset != null) {
-        _aiVideoCtr = VideoPlayerController.asset(widget.aiGuideAsset!)
-          ..initialize().then((_) => setState(() {}));
-      }
+
+      // AI 가이드 비디오 & 솔루션션 로드 (asset)
+      _fetchAISolution();
+      _getAIGuideVideo();
     }
 
     // ② VOICE 모드일 때 AI 솔루션을 호출
     if (widget.isVoiceMode) {
-      _fetchAISolution();
+      
+       _fetchAISolution();
+      _getAIGuideVideo();
+    }
+  }
+
+  Future<void> _sendAudioToApi(File audioFile) async {
+    if (!audioFile.existsSync()) {
+      print('오류: 파일이 존재하지 않습니다.');
+      return;
+    }
+    
+    final uri = Uri.parse('https://f680-203-252-33-7.ngrok-free.app/upload'); // ✅ 실제 API URL로 변경
+    final request = http.MultipartRequest('POST', uri);
+
+    // 파일 이름과 타입 설정
+    final fileName = basename(audioFile.path);
+
+    // 확장자에 따라 contentType 설정
+    String contentType;
+    if (fileName.endsWith('.aac')) {
+      contentType = 'audio/aac';
+    } else if (fileName.endsWith('.mp3')) {
+      contentType = 'audio/mpeg';
+    } else {
+      contentType = 'application/octet-stream';  // 기본값, 다른 형식이 필요할 경우 추가
+    }
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        audioFile.path,
+        filename: fileName,
+        contentType: MediaType.parse(contentType),
+      ),
+    );
+
+    try {
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        print('업로드 성공: $respStr');
+
+        final Map<String, dynamic> jsonResponse = json.decode(respStr);
+        userPronun = jsonResponse['transcription'] ?? '-';
+
+        print('userText 업데이트됨: $userPronun');
+      } 
+      else {
+        print('업로드 실패: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('오류 발생: $e');
     }
   }
 
@@ -60,34 +130,118 @@ class _ResultScreenState extends State<ResultScreen> {
     super.dispose();
   }
 
-  // ③ Gemini 호출 부분 (플레이스홀더)
-  Future<String> fetchPronunciationAdvice(String original, String user) async {
-    // TODO: 여기에 Gemini API 클라이언트를 이용한 실제 호출 코드 작성
-    //
-    // 예시(의사코드)👇
-    // final client = GeminiClient(apiKey: 'YOUR_API_KEY');
-    // final resp = await client.chat(
-    //   system: '당신은 발음 교정 전문 AI입니다.',
-    //   user: '''
-    //     Original: "$original"
-    //     UserPronunciation: "$user"
-    //     Please give me step-by-step advice on how to improve the user's pronunciation.
-    //   '''
-    // );
-    // return resp.choices.first.text;
-    //
-    // 지금은 더미 리턴
-    await Future.delayed(const Duration(milliseconds: 500));
-    return '“Su” → “So”: Try making your mouth shape a bit smaller.\n'
-           '“Seo” → “Sa”: Open your mouth wider and roll your tongue slightly.';
+  Future<void> _getAIGuideVideo() async {
+    final url = Uri.parse("https://3e24-203-252-33-6.ngrok-free.app/get-video");
+
+    http.Response response;
+
+    try {
+      if (widget.isVoiceMode) {
+        final request = http.MultipartRequest('POST', url);
+        request.files.add(
+          http.MultipartFile.fromString('text', widget.originalText),
+        );
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        final videoFile = File(widget.videoFilePath); // 예: mp4"asd."
+        final request = http.MultipartRequest('POST', url);
+        request.fields['text'] = widget.originalText;
+        request.files.add(
+          await http.MultipartFile.fromPath('video_file', videoFile.path),
+        );
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      }
+
+      if (response.statusCode == 200) {
+        final Uint8List videoBytes = response.bodyBytes;
+
+        final tempDir = await getTemporaryDirectory();
+        final filePath = '${tempDir.path}/ai_guide_video.mp4';
+        final file = File(filePath);
+        await file.writeAsBytes(videoBytes);
+
+        _aiVideoCtr = VideoPlayerController.file(file);
+        await _aiVideoCtr!.initialize();
+
+        setState(() {
+          _aiVideoCtr!.play();
+        });
+      } else {
+        print("❌ Failed to load AI video: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("❌ Error fetching AI guide video: $e");
+    }
   }
 
 
+
+  Future<String> fetchPronunciationAdvice(String original, String user) async {
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';  // .env에서 API 키를 가져옴
+    if (apiKey.isEmpty) {
+      return 'Error: API Key not found in .env';
+    }
+
+    final uri = Uri.parse(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey');
+
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final prompt = '''
+  I want you to act as a pronunciation coach.
+
+  Here's the target sentence:
+  Original: "$original"
+
+  Here's the user's pronunciation attempt:
+  UserPronunciation: "$user"
+
+  Please identify the pronunciation differences between the user's attempt and the original. For each mispronounced word or phoneme, provide:
+  1. The correct phonetic transcription (IPA)
+  2. A comparison with the user's mispronunciation
+  3. Specific articulation tips — including mouth shape, tongue position, voicing, and airflow
+  4. Optional visualizations or example comparisons, if useful
+
+  The goal is to help the user pronounce the sentence naturally. Be clear and educational, using simple explanations if possible.
+  ''';
+
+    final body = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {'text': prompt}
+          ]
+        }
+      ]
+    });
+
+    final response = await http.post(
+      uri,
+      headers: headers,
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final text = json['candidates'][0]['content']['parts'][0]['text'];
+      return text;
+    } else {
+      return 'Error: ${response.statusCode} - ${response.body}';
+    }
+  }
+
   Future<void> _fetchAISolution() async {
+    await _sendAudioToApi(File(widget.videoFilePath));
+
+
     setState(() => _loadingAI = true);
     final advice = await fetchPronunciationAdvice(
       widget.originalText,
-      widget.userText,
+      userPronun
     );
     setState(() {
       _aiSolution = advice;
@@ -147,9 +301,9 @@ class _ResultScreenState extends State<ResultScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    widget.isVoiceMode
-                        ? (widget.userText.isEmpty ? '-' : widget.userText)
-                        : '[See your video below]',
+                      userPronun.isEmpty 
+                        ? '[Cannot recognize your voice]' 
+                        : userPronun,
                     style: const TextStyle(fontSize: 14),
                   ),
                 ),
@@ -171,7 +325,7 @@ class _ResultScreenState extends State<ResultScreen> {
             else if (_aiSolution != null)
               _boxedText(_aiSolution!)
             else
-              _boxedText('No advice available.'),
+              _boxedText('Loading AI'),
 
             const SizedBox(height: 24),
             // VOICE vs VIDEO 분기
@@ -181,7 +335,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              _buildPlaceholder(),
+              _buildVideoPlayer(_aiVideoCtr),
             ] else ...[
               const Text(
                 'Your Pronunciation Video',
@@ -232,16 +386,21 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
         child: Text(text, style: const TextStyle(color: Colors.white)),
       );
-
+  
   Widget _boxedText(String t) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(t, style: const TextStyle(fontSize: 14)),
-      );
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey.shade300),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: MarkdownBody(  // 텍스트 대신 MarkdownBody 사용
+      data: t,  // 마크다운 텍스트
+      styleSheet: MarkdownStyleSheet(
+        p: TextStyle(fontSize: 14),  // 텍스트 크기 설정
+      ),
+    ),
+  );
 
   Widget _buildPlaceholder() => Container(
         height: 200,
@@ -260,8 +419,17 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildVideoPlayer(VideoPlayerController? ctr) {
     if (ctr == null || !ctr.value.isInitialized) return _buildPlaceholder();
     return AspectRatio(
-      aspectRatio: ctr.value.aspectRatio,
-      child: VideoPlayer(ctr),
+      aspectRatio: 16 / 9,
+      child: Chewie(
+        controller: ChewieController(
+          videoPlayerController: ctr,
+          autoPlay: true, // 자동 재생 여부
+          looping: true, // 반복 재생 여부
+          aspectRatio: ctr.value.aspectRatio,
+          allowPlaybackSpeedChanging: true, // 배속 변경 허용
+        ),
+      ),
     );
   }
+
 }
