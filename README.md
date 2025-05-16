@@ -1,62 +1,90 @@
 # Gap Ear Frontend
 
 > **Assistive pronunciation training** for people with hearing loss  
-> A Flutter-based mobile UI that records your voice/video, performs speech-to-text, and displays AI-driven pronunciation advice and guidance videos.
+> A Flutter‐based mobile UI that records your voice/video, performs speech‐to‐text, and displays AI-driven pronunciation advice and visual guide videos.
 
 ---
 
-## 📁 Project Structure
-lib/
-├── main.dart
-├── splash_screen.dart # App launch animation & logo
-├── menu_screen.dart # Scenario selection (Psychiatry, Medical, Pharmacy, Custom)
-├── practice_screen.dart # Record 8-second audio or video session
-└── result_screen.dart # Show “correct” vs “your” pronunciation, AI advice, and guide video
-assets/
-├── screens/ # Screenshots for README
-│ ├── splash.png
-│ ├── menu.png
-│ ├── practice_voice.png
-│ ├── practice_video.png
-│ ├── result_voice.png
-│ └── result_video.png
-pubspec.yaml # Dependencies: flutter, camera, speech_to_text, video_player, etc.
+## 📂 Project Structure
+
+<details>
+<summary>Click to expand</summary>
+
+```text
+frontend/
+├── lib/
+│   ├── main.dart
+│   ├── splash_screen.dart    # Splash animation & logo
+│   ├── menu_screen.dart      # Scenario selection (Psychiatry, Medical, Pharmacy, Custom)
+│   ├── practice_screen.dart  # 8-second audio/video capture
+│   └── result_screen.dart    # Show “correct” vs “your” pronunciation, AI advice, guide video
+├── assets/
+│   └── screens/              # Screenshots for README
+│       ├── splash.png
+│       ├── menu.png
+│       ├── practice_voice.png
+│       ├── practice_video.png
+│       ├── result_voice.png
+│       └── result_video.png
+├── pubspec.yaml              # Dependencies: flutter, camera, speech_to_text, video_player…
+└── README.md 
+```
+</details>
 
 ## 🚀 Getting Started
+Clone & install
 
-1. **Clone & install**  
-   ```bash
-   git clone https://github.com/your-org/gap-ear-frontend.git
-   cd gap-ear-frontend
-   flutter pub get
-   flutter run
+```bash
 
-## 🔧 How It Works
+git clone https://github.com/SKKU-GDG/frontend.git
+cd frontend
+flutter pub get
+flutter run
+```
+
+## 🔍 How It Works
 Splash → Menu
-
-Logo and slogan
-
-Choose a medical scenario or custom prompt
+App launch animation, then select a medical scenario or custom prompt.
 
 Practice Screen
 
-Displays the target sentence
+Displays the target sentence (original text)
 
-Toggle VOICE / VIDEO
+Toggle VOICE / VIDEO mode
 
-Tap the big button → 8-second recording (audio or video)
+Tap the big button to record 8 seconds of audio or video
 
 Result Screen
 
-Correct pronun.: shows original text
+Correct pronun. shows the original text
 
-Your pronun.: STT transcript or “[See your video below]”
+Your pronun. shows STT transcript or “[See your video below]”
 
-AI Solution: fetched from Gemini API (step-by-step tips)
+AI Solution
 
-AI Guide:
+Fetched from Gemini API (step-by-step tips)
 
-Voice mode: placeholder for future video
+Displays in a bordered text box
 
-Video mode: plays user’s video + AI deepfake guide
+AI Pronunciation Guide
+
+Placeholder spinner in voice mode
+
+Deepfake video in video mode
+
+## ✨ Features
+Scenario Selection
+Psychiatry, Medical Treatment, Pharmacy, or Custom input.
+
+8-Second Recording
+One-tap automatic start/stop for audio or video.
+
+Real-Time STT
+Displays recognized English text as “Your Pronun”.
+
+AI Pronunciation Advice
+Calls Gemini API to generate personalized, step-by-step improvement tips.
+
+Visual Guide
+AI-generated deepfake video showing correct mouth movements.
 
