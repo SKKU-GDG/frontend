@@ -30,10 +30,10 @@ class MenuScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GridView.count(
-              shrinkWrap: true,           // ← 그리드를 자식 크기에 맞춤
+              shrinkWrap: true,           
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 2,
-              childAspectRatio: 0.8,      // <-- 이 줄 추가 (작을수록 세로 공간 ↑)
+              childAspectRatio: 0.8,      
               mainAxisSpacing: 24,
               crossAxisSpacing: 16,
               children: items.map((item) {
@@ -61,7 +61,6 @@ class _MenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: 각 모드별 화면으로 이동
         Navigator.push(
           context,
           MaterialPageRoute(

@@ -32,16 +32,16 @@ dependencies:
     sdk: flutter
   http: ^0.13.6
   provider: ^6.0.5
-  camera: ^0.10.0             # 영상 녹화
-  video_player: ^2.5.1        # 결과 영상 재생
+  camera: ^0.10.0            
+  video_player: ^2.5.1        
 
   flutter_sound: ^9.2.13
   chewie: ^1.7.0
-  path_provider: ^2.0.15    # 파일 경로 제공
+  path_provider: ^2.0.15    
   flutter_markdown: ^0.6.10
   flutter_dotenv: ^5.0.2
   permission_handler: ^11.0.1
-  fluttertoast: ^8.2.2 # 최신 버전 확인 필요
+  fluttertoast: ^8.2.2 
 
 
   

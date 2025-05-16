@@ -17,10 +17,9 @@ import 'package:http_parser/http_parser.dart';
 class ResultScreen extends StatefulWidget {
   final String category;
   final String originalText;
-  final String userText;      // VOICE 모드: 텍스트 / VIDEO 모드: 파일 경로
-  final bool isVoiceMode;     // true: 음성 모드, false: 영상 모드
+  final String userText;      
+  final bool isVoiceMode;     
   
-  //수정한 부분
   final String videoFilePath;
   
   const ResultScreen({
@@ -29,7 +28,6 @@ class ResultScreen extends StatefulWidget {
     required this.originalText,
     required this.userText,
     required this.isVoiceMode,
-    //수정한 부분
     required this.videoFilePath,
   }) : super(key: key);
 
@@ -40,7 +38,6 @@ class ResultScreen extends StatefulWidget {
 class _ResultScreenState extends State<ResultScreen> {
   VideoPlayerController? _userVideoCtr;
 
-  // ① AI 솔루션 문자열을 저장할 상태 변수
   String? _aiSolution;
   bool   _loadingAI = false;
   
@@ -55,16 +52,13 @@ class _ResultScreenState extends State<ResultScreen> {
 
 
     if (!widget.isVoiceMode) {
-      // 사용자가 녹화한 비디오 로드
       _userVideoCtr = VideoPlayerController.file(File(widget.videoFilePath))
         ..initialize().then((_) => setState(() {}));
 
-      // AI 가이드 비디오 & 솔루션션 로드 (asset)
       _fetchAISolution();
       _getAIGuideVideo();
     }
 
-    // ② VOICE 모드일 때 AI 솔루션을 호출
     if (widget.isVoiceMode) {
       
        _fetchAISolution();
@@ -74,24 +68,22 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _sendAudioToApi(File audioFile) async {
     if (!audioFile.existsSync()) {
-      print('오류: 파일이 존재하지 않습니다.');
+      print('Could not find the audio file'); 
       return;
     }
     
-    final uri = Uri.parse('https://f680-203-252-33-7.ngrok-free.app/upload'); // ✅ 실제 API URL로 변경
+    final uri = Uri.parse('https://f680-203-252-33-7.ngrok-free.app/upload'); 
     final request = http.MultipartRequest('POST', uri);
 
-    // 파일 이름과 타입 설정
     final fileName = basename(audioFile.path);
 
-    // 확장자에 따라 contentType 설정
     String contentType;
     if (fileName.endsWith('.aac')) {
       contentType = 'audio/aac';
     } else if (fileName.endsWith('.mp3')) {
       contentType = 'audio/mpeg';
     } else {
-      contentType = 'application/octet-stream';  // 기본값, 다른 형식이 필요할 경우 추가
+      contentType = 'application/octet-stream';  
     }
 
     request.files.add(
@@ -108,18 +100,18 @@ class _ResultScreenState extends State<ResultScreen> {
 
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
-        print('업로드 성공: $respStr');
+        print('upload success: $respStr');
 
         final Map<String, dynamic> jsonResponse = json.decode(respStr);
         userPronun = jsonResponse['transcription'] ?? '-';
 
-        print('userText 업데이트됨: $userPronun');
+        print('userText : $userPronun');
       } 
       else {
-        print('업로드 실패: ${response.statusCode}');
+        print('can not upload: ${response.statusCode}');
       }
     } catch (e) {
-      print('오류 발생: $e');
+      print('error: $e'); 
     }
   }
 
@@ -144,7 +136,7 @@ class _ResultScreenState extends State<ResultScreen> {
         final streamedResponse = await request.send();
         response = await http.Response.fromStream(streamedResponse);
       } else {
-        final videoFile = File(widget.videoFilePath); // 예: mp4"asd."
+        final videoFile = File(widget.videoFilePath); 
         final request = http.MultipartRequest('POST', url);
         request.fields['text'] = widget.originalText;
         request.files.add(
@@ -179,7 +171,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
 
   Future<String> fetchPronunciationAdvice(String original, String user) async {
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';  // .env에서 API 키를 가져옴
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';  
     if (apiKey.isEmpty) {
       return 'Error: API Key not found in .env';
     }
@@ -319,7 +311,6 @@ class _ResultScreenState extends State<ResultScreen> {
             const SizedBox(height: 8),
 
             
-            // ④ 로딩 중이면 스피너, 완료되면 박스에 텍스트
             if (_loadingAI)
               Center(child: CircularProgressIndicator())
             else if (_aiSolution != null)
@@ -328,7 +319,6 @@ class _ResultScreenState extends State<ResultScreen> {
               _boxedText('Loading AI'),
 
             const SizedBox(height: 24),
-            // VOICE vs VIDEO 분기
             if (widget.isVoiceMode) ...[
               const Text(
                 'AI Pronunciation Guide',
@@ -394,10 +384,10 @@ class _ResultScreenState extends State<ResultScreen> {
       border: Border.all(color: Colors.grey.shade300),
       borderRadius: BorderRadius.circular(8),
     ),
-    child: MarkdownBody(  // 텍스트 대신 MarkdownBody 사용
-      data: t,  // 마크다운 텍스트
+    child: MarkdownBody(  
+      data: t,  
       styleSheet: MarkdownStyleSheet(
-        p: TextStyle(fontSize: 14),  // 텍스트 크기 설정
+        p: TextStyle(fontSize: 14), 
       ),
     ),
   );
@@ -430,10 +420,10 @@ class _ResultScreenState extends State<ResultScreen> {
       child: Chewie(
         controller: ChewieController(
           videoPlayerController: ctr,
-          autoPlay: true, // 자동 재생 여부
-          looping: true, // 반복 재생 여부
+          autoPlay: true, 
+          looping: true, 
           aspectRatio: aspectRatio,
-          allowPlaybackSpeedChanging: true, // 배속 변경 허용
+          allowPlaybackSpeedChanging: true, 
         ),
       ),
     );
