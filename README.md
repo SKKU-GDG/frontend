@@ -32,15 +32,55 @@ frontend/
 </details>
 
 ## 🚀 Getting Started
-Clone & install
+
+To get started with the application, follow the steps below:
+
+### 🛠️ Clone & Install
+
+Clone the repository and install the necessary dependencies.
 
 ```bash
-
-git clone https://github.com/SKKU-GDG/frontend.git
+git clone [https://github.com/SKKU-GDG/frontend.git](https://github.com/SKKU-GDG/frontend.git)
 cd frontend
 flutter pub get
 flutter run
 ```
+
+### ⚙️ Environment Configuration
+
+**⚠️ Important:** Before running the application, you **must** configure the Gemini API key.
+
+1.  Create a `.env` file in the root directory of the `frontend` project.
+2.  Add your Gemini API key to the `.env` file with the following format:
+
+  ```
+    GEMINI_API_KEY=YOUR_API_KEY_HERE
+   ```
+
+   Replace `YOUR_API_KEY_HERE` with your **actual Gemini API key**.
+
+### 🔗 Backend API Endpoint Configuration
+
+To connect to the backend and utilize the speech recognition analysis, you need to update the API call URL in the `result_screen.dart` file.
+
+1.  Navigate to the directory containing your Dart files (likely the `lib` directory) and open `result_screen.dart`.
+
+2.  Locate the section of code where the API call to the backend is made. This will typically involve an HTTP request using a library like `http`.
+
+3.  **Ensure you replace the placeholder URL** with the actual URL of your deployed backend. For example:
+
+   ```dart
+    // ... other code
+    final uri = Uri.parse('[https://f680-203-252-33-7.ngrok-free.app/upload](https://f680-203-252-33-7.ngrok-free.app/upload)');
+    final request = http.MultipartRequest('POST', uri);
+    // ...
+   ```
+
+Replace `'https://f680-203-252-33-7.ngrok-free.app'` with the correct URL of your deployed backend service.
+
+After completing these steps, you should be able to run the Flutter frontend and successfully connect to your backend for speech recognition analysis.
+
+
 
 ## 🔍 How It Works
 Splash → Menu
